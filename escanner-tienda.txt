@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Escáner Tienda Alimentación</title>
+  <style>
+    body { font-family: Arial; margin: 30px; background:#f4f4f4; }
+    h1 { color: #2c3e50; }
+    input, select, button { margin:5px 0; padding:8px; width:100%; }
+    .card {
+      background:white;
+      padding:15px;
+      margin-top:10px;
+      border-radius:8px;
+      box-shadow:0 2px 5px rgba(0,0,0,0.1);
+    }
+    img { max-width:100px; margin-top:5px; }
+    button { background:#27ae60; color:white; border:none; cursor:pointer; }
+    button:hover { background:#219150; }
+  </style>
+</head>
+<body>
+
+<h1>Escáner de Facturas - Tienda</h1>
+
+<h3>Agregar Nuevo Ticket</h3>
+
+<input type="date" id="fecha">
+<input type="text" id="proveedor" placeholder="Nombre del proveedor">
+<select id="categoria">
+  <option>Compras</option>
+  <option>Ventas</option>
+  <option>Otros</option>
+</select>
+<input type="number" id="monto" placeholder="Monto (€)">
+<input type="file" id="foto" accept="image/*">
+<button onclick="guardar()">Guardar</button>
+
+<h3>Historial</h3>
+<div id="lista"></div>
+
+<button onclick="exportarCSV()">Exportar CSV</button>
+
+<script>
+let datos = JSON.parse(localStorage.getItem("tickets")) || [];
+
+function guardar() {
+  const fecha = document.getElementById("fecha").value;
+  const proveedor = document.getElementById("proveedor").value;
+  const categoria = document.getElementById("categoria").value;
+  const monto = document.getElementById("monto").value;
+  const fotoInput = document.getElementById("foto");
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const nuevo = {
+      fecha,
+      proveedor,
+      categoria,
+      monto,
+      foto: e.target.result
+    };
+    datos.push(nuevo);
+    localStorage.setItem("tickets", JSON.stringify(datos));
+    mostrar();
+  };
+
+  if (fotoInput.files[0]) {
+    reader.readAsDataURL(fotoInput.files[0]);
+  } else {
+    alert("Sube una foto del ticket");
+  }
+}
+
+function mostrar() {
+  const lista = document.getElementById("lista");
+  lista.innerHTML = "";
+  datos.forEach(d => {
+    lista.innerHTML += `
+      <div class="card">
+        <strong>${d.proveedor}</strong><br>
+        Fecha: ${d.fecha}<br>
+        Categoría: ${d.categoria}<br>
+        Monto: €${d.monto}<br>
+        <img src="${d.foto}">
+      </div>
+    `;
+  });
+}
+
+function exportarCSV() {
+  let csv = "Fecha,Proveedor,Categoria,Monto\n";
+  datos.forEach(d => {
+    csv += `${d.fecha},${d.proveedor},${d.categoria},${d.monto}\n`;
+  });
+
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "facturas.csv";
+  a.click();
+}
+
+mostrar();
+</script>
+
+</body>
+</html>
